@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+	<id>jexiftoolgui</id>
+	<metadata_license>CC-BY-SA-3.0</metadata_license>
+	<project_license>GPL-3.0</project_license>
+	<name>pyEnfuseGUI</name>
+	<summary>Graphic User Interface for command-line tools enfuse and align_image_stack</summary>
+	<description>
+		<p>pyEnfuseGUI is a Python3 PySimpleGUI Windows/Linux/MacOS graphical frontend for enfuse and align_image_stack.</p>
+	</description>
+	<launchable type="desktop-id">pyenfusegui.desktop</launchable>
+	<url type="homepage">https://hvdwolf.github.io/pyEnfuseGUI/</url>
+	<screenshots>
+		<screenshot type="default">
+			<image>https://hvdwolf.github.io/pyEnfuseGUI/screenshots/LinuxXFCE-mainscreen.jpg</image>
+		</screenshot>
+	</screenshots>
+	<provides>
+		<id>pyenfusegui.desktop</id>
+	</provides>
+</component>

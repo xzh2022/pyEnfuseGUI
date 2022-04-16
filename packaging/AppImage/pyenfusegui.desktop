@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=pyEnfuseGUI
+Comment=python3 pysimplegui for enfuse and align_image_stack
+Exec=/usr/bin/pyenfusegui
+Icon=/usr/share/pyenfusegui/pyenfusegui-logo
+Terminal=false
+Type=Application
+Categories=Graphics;Viewer;Utility;
+StartupNotify=true

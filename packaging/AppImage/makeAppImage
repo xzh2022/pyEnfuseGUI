@@ -1,0 +1,84 @@
+#!/bin/bash
+
+# Script to make a universal appimage
+# version 0.2, 2022-04-16, hvdw
+
+# Requirements:
+# appimagetool: Download from https://github.com/AppImage/AppImageKit/releases
+# enfuse and align_image_stack
+enf_ais="/home/harryvanderwolf/software/enf_ais/EA_bundle"
+
+if [ "$1" = "" ]
+then
+        printf "\n\nYou have to provide the version\n\n"
+        exit
+fi
+
+VER="$1"
+
+#
+printf "Remove, create and step into our AppDir\n\n"
+#
+AppDir="pyEnfuseGUI-x86_64"
+rm -rf ${AppDir}
+mkdir -p ${AppDir}
+cd ${AppDir}
+
+
+printf "Create folders and copy program icon and desktop file\n\n"
+#
+mkdir -p usr/bin
+mkdir -p usr/share/pyenfusegui
+mkdir -p usr/share/applications
+mkdir -p usr/share/metainfo
+
+printf "Copy enfuse, align_image_stack and libraries"
+cp -vr ${enf_ais}/* .
+
+printf "Run pyinstaller with the spec file from the root source folder"
+pyinstaller ../../../pyenfusegui.spec
+
+printf "When done MOVE the contents of dist/pyenfusegui into the AppDir/usr/bin"
+mv dist/pyenfusegui/* usr/bin
+rm -rf dist build
+#
+
+
+cp ../which usr/bin/which
+chmod +x usr/bin/which
+cp ../pyenfusegui-logo.png usr/share/pyenfusegui
+cp ../pyenfusegui-logo.png .
+cp ../pyenfusegui.desktop usr/share/applications
+cp ../pyenfusegui.desktop .
+cp ../pyenfusegui.appdata.xml usr/share/metainfo
+
+#
+printf "Create the AppRun script\n\n"
+#
+#cd usr/bin
+cat > ./AppRun <<\EOF
+#!/bin/sh
+HERE=$(dirname $(readlink -f "${0}"))
+export PATH="$APPDIR/usr/bin:${HERE}/usr/local/bin:${HERE}/usr/bin:$PATH"
+
+pyenfusegui
+EOF
+
+chmod a+x ./AppRun
+
+#
+# We're done in the AppDir
+cd ..
+#rm ${AppDir}/${latest_exif}
+
+#
+# Create the AppImage
+#
+wget -c https://github.com/AppImage/AppImageKit/releases/download/12/appimagetool-x86_64.AppImage
+chmod +x appimagetool-x86_64.AppImage
+./appimagetool-x86_64.AppImage -n ${AppDir}
+
+#
+# Rename the created app image
+#
+mv pyEnfuseGUI-x86_64.AppImage pyEnfuseGUI-${VER}-x86_64.AppImage
