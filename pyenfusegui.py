@@ -66,8 +66,8 @@ def logger(e):
 #----------------------------------------------------------------------------------------------
 #----------------------------- Main function --------------------------------------------------
 def main():
-    tmpfolder = os.path.join(tempfile.gettempdir(), 'pyenfusegui')
-    settingsFile = os.path.join(Path.home(), '.pyenfusegui.json')
+    tmpfolder = os.path.join(os.path.realpath(tempfile.gettempdir()), 'pyenfusegui')
+    settingsFile = os.path.join(os.path.realpath(Path.home()), '.pyenfusegui.json')
     file_functions.recreate_tmp_workfolder(tmpfolder)
     sg.user_settings_filename(path=Path.home())
     start_folder = sg.user_settings_get_entry('imgfolder', Path.home())
@@ -130,6 +130,7 @@ def main():
             print('pressed Create Preview')
             if len(values['-FILE LIST-']) >1: # We have at least 2 files
                 failed = image_functions.resizetopreview(values, folder, tmpfolder)
+                print(failed)
                 go_on = False
                 if failed != '':
                     is_zero = file_functions.getFileSizes(values, tmpfolder)
@@ -141,6 +142,8 @@ def main():
                         go_on = True
                         #sg.popup_scrolled(program_texts.resize_warning_message, failed, icon=image_functions.get_icon())
                         program_texts.popup_text_scroll('Something went wrong',program_texts.resize_warning_message, failed)
+                else: # failed = ''
+                    go_on = True
                 if go_on:
                     if (values['_useAISPreview_']):
                         cmdstring = image_functions.create_ais_command(values, folder, tmpfolder, 'preview')

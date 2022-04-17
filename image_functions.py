@@ -18,7 +18,6 @@ from pathlib import Path
 import tkinter as tk
 import PySimpleGUI as sg
 from PIL import Image # to manipulate images and read exif
-import exif  # to read and write exif
 from PIL.ExifTags import TAGS
 import file_functions
 
@@ -213,14 +212,18 @@ def create_ais_command(all_values, folder, tmpfolder, type):
     cmd_list = []
 
     file_functions.remove_files(os.path.join(tmpfolder,'*ais*'))
+    if platform.system() == 'Windows':
+        cmd_string = 'align_image_stack.exe '
+    else:
+        cmd_string = 'align_image_stack '
     if (type == 'preview'):
         #cmd_string = 'align_image_stack --gpu -a ' + os.path.join(tmpfolder,'preview_ais_001') + ' -v -t 2 -C -i '
-        cmd_string = 'align_image_stack --gpu -a ' + os.path.join(tmpfolder, 'preview_ais_001') + ' '
+        cmd_string += '--gpu -a ' + os.path.join(tmpfolder, 'preview_ais_001') + ' '
         cmd_list.append('--gpu')
         cmd_list.append('-a')
         cmd_list.append(os.path.join(tmpfolder, 'preview_ais_001'))
     else:
-        cmd_string = 'align_image_stack --gpu -a ' + os.path.join(tmpfolder,'ais_001') + ' '
+        cmd_string += ' -a ' + os.path.join(tmpfolder,'ais_001') + ' '
     cmd_string += check_ais_params(all_values)
 
     files = all_values['-FILE LIST-']
@@ -277,10 +280,14 @@ def check_enfuse_output_format(all_values):
 
 def create_enfuse_command(all_values, folder, tmpfolder, type, newImageFileName):
     cmd_string = ""
+    if platform.system() == 'Windows':
+        cmd_string = 'enfuse.exe '
+    else:
+        cmd_string = 'enfuse '
     if type == 'preview_ais':
-        cmd_string = 'enfuse -v --compression=90 ' + os.path.join(tmpfolder,'preview_ais_001*') + ' -o ' + os.path.join(tmpfolder,'preview.jpg ')
+        cmd_string += ' -v --compression=90 ' + os.path.join(tmpfolder,'preview_ais_001*') + ' -o ' + os.path.join(tmpfolder,'preview.jpg ')
     elif type == 'preview':
-        cmd_string = 'enfuse -v --compression=90 ' + ' -o ' + os.path.join(tmpfolder, 'preview.jpg ')
+        cmd_string += ' -v --compression=90 ' + ' -o ' + os.path.join(tmpfolder, 'preview.jpg ')
         files = all_values['-FILE LIST-']
         for file in files:
             nfile = os.path.join(tmpfolder, file)
@@ -290,12 +297,12 @@ def create_enfuse_command(all_values, folder, tmpfolder, type, newImageFileName)
                 cmd_string += "\"" + nfile + "\" "
         # print("\n\n", cmd_string, "\n\n")
     elif type == 'full_ais':
-        cmd_string = 'enfuse -v ' + os.path.join(tmpfolder,'ais_001*') + ' -o "' + newImageFileName + '" '
+        cmd_string += ' -v ' + os.path.join(tmpfolder,'ais_001*') + ' -o "' + newImageFileName + '" '
         # Check enfuse file output format
         cmd_string += check_enfuse_output_format(all_values)
     else: # full enfuse without ais
         #cmd_string = 'enfuse -v --level=29 --compression=90 ' + ' -o ' + newImageFileName
-        cmd_string = 'enfuse -v ' + ' -o "' + newImageFileName + '" '
+        cmd_string += ' -v ' + ' -o "' + newImageFileName + '" '
         # Check enfuse file output format
         cmd_string += check_enfuse_output_format(all_values)
         files = all_values['-FILE LIST-']
