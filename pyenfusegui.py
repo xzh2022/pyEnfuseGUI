@@ -61,6 +61,7 @@ def logger(e):
     print('Error Return Type: ', type(e))
     print('Error Class: ', e[0])
     print('Error Message: ', e[1])
+    return str(e[1])
 
 #----------------------------------------------------------------------------------------------
 #----------------------------- Main function --------------------------------------------------
@@ -84,26 +85,27 @@ def main():
             return('Cancel', values)
             break
         elif event == '-FILES-':
+            print('values["-FILES-"]   ',values["-FILES-"])
             filenames = []
             window['-FILE LIST-'].update(filenames)
-            file_list = values["-FILES-"].split(";")
-            for file in file_list:
-                #print(f)
-                fname = os.path.basename(file)
-                folder = os.path.dirname(os.path.abspath(file))
-                # Now save this folder as "last opened folder" to our settings
-                sg.user_settings_filename(path=Path.home())
-                sg.user_settings_set_entry('last_opened_folder', folder)
-                filenames.append(fname)
-                pathnames.append(file)
-                # get all exif date if available
-                image_exif_dictionaries[fname] = image_functions.get_all_exif_info(file)
-            window['-FILE LIST-'].update(filenames)
-            window['-FOLDER-'].update(folder)
-            #warning_download()
+            if values["-FILES-"]: # or values["-FILES-"] == {}: #empty list returns False
+                file_list = values["-FILES-"].split(";")
+                for file in file_list:
+                    # print(f)
+                    fname = os.path.basename(file)
+                    folder = os.path.dirname(os.path.abspath(file))
+                    # Now save this folder as "last opened folder" to our settings
+                    sg.user_settings_filename(path=Path.home())
+                    sg.user_settings_set_entry('last_opened_folder', folder)
+                    filenames.append(fname)
+                    pathnames.append(file)
+                    # get all exif date if available
+                    image_exif_dictionaries[fname] = image_functions.get_all_exif_info(file)
+                window['-FILE LIST-'].update(filenames)
+                window['-FOLDER-'].update(folder)
         elif event == 'About...':
             window.disappear()
-            program_texts.about_popup()
+            sg.popup(program_texts.about_message, grab_anywhere=True, keep_on_top=True, icon=image_functions.get_icon())
             window.reappear()
         elif event == 'Align_Image_stack parameters':
             try:
@@ -128,21 +130,33 @@ def main():
             print('pressed Create Preview')
             if len(values['-FILE LIST-']) >1: # We have at least 2 files
                 failed = image_functions.resizetopreview(values, folder, tmpfolder)
-                if (values['_useAISPreview_']):
-                    cmdstring = image_functions.create_ais_command(values, folder, tmpfolder, 'preview')
-                    print("\n\n", cmdstring, "\n\n")
-                    result = run_commands.run_shell_command(cmdstring, "running align_image_stack", False)
-                    # print("\n\n" + result + "\n\n")
-                    if result == 'OK':
-                        cmdstring = image_functions.create_enfuse_command(values, folder, tmpfolder, 'preview_ais', '')
+                go_on = False
+                if failed != '':
+                    is_zero = file_functions.getFileSizes(values, tmpfolder)
+                    if is_zero > 0:
+                        #sg.popup_scrolled(program_texts.resize_error_message, failed, icon=image_functions.get_icon())
+                        sg.popup(program_texts.resize_error_message, icon=image_functions.get_icon())
+                        go_on = False # not necessary but do it anyway
+                    else:
+                        go_on = True
+                        #sg.popup_scrolled(program_texts.resize_warning_message, failed, icon=image_functions.get_icon())
+                        program_texts.popup_text_scroll('Something went wrong',program_texts.resize_warning_message, failed)
+                if go_on:
+                    if (values['_useAISPreview_']):
+                        cmdstring = image_functions.create_ais_command(values, folder, tmpfolder, 'preview')
+                        print("\n\n", cmdstring, "\n\n")
+                        result = run_commands.run_shell_command(cmdstring, "running align_image_stack", False)
+                        # print("\n\n" + result + "\n\n")
+                        if result == 'OK':
+                            cmdstring = image_functions.create_enfuse_command(values, folder, tmpfolder, 'preview_ais','')
+                            print("\n\n", cmdstring, "\n\n")
+                            result = run_commands.run_shell_command(cmdstring, 'running enfuse', False)
+                            image_functions.display_preview(window, os.path.join(tmpfolder, 'preview.jpg'))
+                    else:  # Create preview without using ais
+                        cmdstring = image_functions.create_enfuse_command(values, folder, tmpfolder, 'preview', '')
                         print("\n\n", cmdstring, "\n\n")
                         result = run_commands.run_shell_command(cmdstring, 'running enfuse', False)
                         image_functions.display_preview(window, os.path.join(tmpfolder, 'preview.jpg'))
-                else:  # Create preview without using ais
-                    cmdstring = image_functions.create_enfuse_command(values, folder, tmpfolder, 'preview', '')
-                    print("\n\n", cmdstring, "\n\n")
-                    result = run_commands.run_shell_command(cmdstring, 'running enfuse', False)
-                    image_functions.display_preview(window, os.path.join(tmpfolder, 'preview.jpg'))
             else: # 1 or 0 images selected
                 sg.popup("You need to select at least 2 images", icon=image_functions.get_icon())
         elif event == '_CreateImage_':
@@ -163,22 +177,23 @@ def main():
                     if values['_useAIS_']:
                         cmdstring = image_functions.create_ais_command(values, folder, tmpfolder, '')
                         print("\n\n", cmdstring, "\n\n")
-                        result = run_commands.run_shell_command(cmdstring, 'running align_image_stack', False)
+                        result = run_commands.run_shell_command(cmdstring, '  Now running align_image_stack  \n  Please be patient  ', False)
                         print("\n\n" + result + "\n\n")
                         if result == 'OK':
                             cmdstring = image_functions.create_enfuse_command(values, folder, tmpfolder, 'full_ais',
                                                                               os.path.join(folder, folderFileName[1]))
                             print("\n\n", cmdstring, "\n\n")
-                            result = run_commands.run_shell_command(cmdstring, 'running enfuse', False)
+                            result = run_commands.run_shell_command(cmdstring, '  Now running enfuse  \n  Please be patient  ', False)
                     else:  # Create full image without using ais
                         cmdstring = image_functions.create_enfuse_command(values, folder, tmpfolder, '',
                                                                           os.path.join(folder, folderFileName[1]))
                         print("\n\n", cmdstring, "\n\n")
-                        result = run_commands.run_shell_command(cmdstring, 'running enfuse', False)
+                        result = run_commands.run_shell_command(cmdstring, '  Now running enfuse  \n  Please be patient  ', False)
                         # display_preview(window, os.path.join(tmpfolder, 'preview.jpg'))
                     if values['_dispFinalIMG_']:
-                        image_functions.displayImage(os.path.join(folder, folderFileName[1]))
-                    sg.popup("Your created image can be found at:\n\n" + os.path.join(folder, folderFileName[1]) + "\n\n", icon=image_functions.get_icon())
+                        #image_functions.displayImage(os.path.join(folder, folderFileName[1]))
+                        image_functions.displayImageWindow(os.path.join(folder, folderFileName[1]))
+                    #sg.popup("Your created image can be found at:\n\n" + os.path.join(folder, folderFileName[1]) + "\n\n", icon=image_functions.get_icon())
             else: # 1 or 0 images selected
                 sg.popup("You need to select at least 2 images", icon=image_functions.get_icon())
 

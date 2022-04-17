@@ -143,7 +143,8 @@ def resizetopreview(all_values, folder, tmpfolder):
                 #for k, v in preview_img.getexif().items():
                 preview_img.save(previewfile, "JPEG", exif=exifd) # Save all exif data from original to resized image
             except Exception as e:
-                pyenfusegui.logger(e)
+                failed += pyenfusegui.logger(e) + '\n' # get the error from the logger
+                preview_img.save(previewfile, "JPEG")
                 #pass
     return failed
 
@@ -317,7 +318,7 @@ def get_curr_screen_geometry():
     Returns:
         geometry (str): The standard Tk geometry string.
             [width]x[height]+[left]+[top]
-    """
+
     root = tk.Tk()
     root.update_idletasks()
     root.attributes('-fullscreen', True)
@@ -325,6 +326,14 @@ def get_curr_screen_geometry():
     geometry = root.winfo_geometry()
     root.destroy()
     return geometry
+    """
+    # Do not use above. It might function better in a multi window environment
+    # but shows a gray full screen window for a moment
+    root = tk.Tk()
+    width = root.winfo_screenwidth()
+    height = root.winfo_screenheight()
+    root.destroy() # do not forget to delete the tk window
+    return int(width), int(height)
 
 def display_preview(mainwindow, imgfile):
     try:
@@ -343,13 +352,43 @@ def display_preview(mainwindow, imgfile):
         pass
     #exif_table = image_functions.get_basic_exif_info(imgfile, 'print')
 
-
+# This displays the final image in the default viewer
 def displayImage(imgpath):
 
     rawimgpath = str(imgpath)
     newImg = Image.open(rawimgpath)
     newImg.show()
 
+def displayImageWindow(imgpath):
+
+    rawimgpath = str(imgpath)
+    newImg = Image.open(rawimgpath)
+    #imgsize = newImg.size
+    scrwidth, scrheight = get_curr_screen_geometry()
+    print('scrwidth x scrheight: ' + str(scrwidth) + 'x' + str(scrheight))
+    # 4k is 3840 x 2160, HD is 1920 x 18080
+    if scrwidth >= 1920 and scrwidth < 3840:
+        scrwidth = 1860
+        scrheight = 1026
+    newImg.thumbnail((scrwidth, scrheight), Image.ANTIALIAS)
+    bio = io.BytesIO()
+    newImg.save(bio, format='PNG')
+    layout = [
+        [sg.Image(bio.getvalue(),key='-IMAGE-')],
+        [sg.Button('Exit', visible=False, key='-exit-')] # invisible button necessary to allow windows read
+    ]
+    window = sg.Window('Your image: ' + imgpath, layout, no_titlebar=False, location=(0,0), size=(scrwidth,scrheight), keep_on_top=True, icon=get_icon())
+
+    #window = sg.Window(imgpath, layout,  keep_on_top=True).Finalize()
+    #window = sg.Window(imgpath, layout, no_titlebar=False, keep_on_top=True).Finalize().Maximize()
+    #window.Maximize()
+    while True:
+        event, values = window.read()
+        if event in (sg.WINDOW_CLOSED,'-exit-'):
+            break
+    window.close
+
+# This function adds the program icon to the top-left of the displayed windows and popups
 def get_icon():
     if platform.system() == 'Windows':
         wicon = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'images','logo.ico')

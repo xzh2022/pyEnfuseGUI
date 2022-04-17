@@ -12,120 +12,12 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
 # the GNU General Public Licence for more details.
 
-import os, tempfile, shutil, glob
-import xml.etree.ElementTree as ET
+import os, shutil, glob
 
 import PySimpleGUI as sg
 
-##################################################################################################
-# Configuration xml file
-def write_default_config():
-    config = "<preferences>\n"
-    config += "\t<def_startupfolder></def_startupfolder>\n"
-    config += "\t<def_creator></def_creator>\n"
-    config += "\t<def_copyright></def_copyright>\n"
-    config += "</preferences>\n"
+import image_functions
 
-    userpath = os.path.expanduser('~')
-    config_filepath = os.path.join(userpath, '.pyenfusegui')
-    if not os.path.isdir(config_filepath):
-        os.mkdir(config_filepath)
-    config_file = open(os.path.join(config_filepath, 'config.xml'), "w")
-    config_file.write(config)
-    config_file.close()
-
-def error_reading_configparameter(self):
-    message = ("Somehow I encountered an error reading the config file.\n"
-               "This can happen when:\n"
-               "- the config file somehow got damaged.\n"
-               "- this is the very first program start.\n\n"
-               "pyEnfuseGUI will simply create a new config file. Please "
-               "check your preferences.")
-    #window.disappear()
-    sg.popup(message)
-    #window.reappear()
-
-def read_xml_config(self):
-    tempstr = lambda val: '' if val is None else val
-
-    userpath = os.path.expanduser('~')
-    #print(userpath)
-    print("reading from " + os.path.join(userpath, '.pyenfusegui', 'config.xml'))
-    # First we check in the safe way for the existence of the config file
-    if os.path.isfile(os.path.join(userpath, '.pyenfusegui', 'config.xml')):
-        try:
-            self.configtree = ET.parse(os.path.join(userpath, '.pyenfusegui', 'config.xml'))
-            self.configroot = self.configtree.getroot()
-        except:
-            sg.popup("Error!", "config.xml exists, but unable to open config.xml" )
-            file_read = False
-    else: # No lensdb.xml => first time use or whatever error
-        error_reading_configparameter(self)
-        write_default_config()
-        self.configtree = ET.parse(os.path.join(userpath, '.pyenfusegui', 'config.xml'))
-        self.configroot = self.configtree.getroot()
-
-    for pref_record in self.configroot:
-        for tags in pref_record.iter('alternate_exiftool'):
-            if tags.text == "True":
-                self.alternate_exiftool = True
-            else:
-                self.alternate_exiftool = False
-        for tags in pref_record.iter('exiftooloption'):
-            self.exiftooloption.setText(tags.text)
-        for tags in pref_record.iter('pref_thumbnail_preview'):
-            if tags.text == "True":
-                self.pref_thumbnail_preview.setChecked(1)
-            else:
-                self.pref_thumbnail_preview.setChecked(0)
-        for tags in pref_record.iter('def_startupfolder'):
-            self.LineEdit_def_startupfolder.setText(tags.text)
-        for tags in pref_record.iter('def_creator'):
-            self.def_creator.setText(tags.text)
-        for tags in pref_record.iter('def_copyright'):
-            self.def_copyright.setText(tags.text)
-        for tags in pref_record.iter('images_view'):
-            print(tags.text)
-            index = self.images_view.findText(tags.text, Qt.MatchFixedString)
-            if index >= 0:
-                self.images_view.setCurrentIndex(index)
-        
-
-def write_xml_config(self):
-    for pref_record in self.configroot:
-        for tags in pref_record.iter('alternate_exiftool'):
-            if self.exiftooloption.text() == "":
-                tags.text = "False"
-                self.alternate_exiftool = False
-            else:
-                tags.text = "True"
-                self.alternate_exiftool = True
-        for tags in pref_record.iter('exiftooloption'):
-            tags.text = self.exiftooloption.text()
-        for tags in pref_record.iter('pref_thumbnail_preview'):
-            if self.pref_thumbnail_preview.isChecked():
-                tags.text = "True"
-            else:
-                tags.text = "False"
-        for tags in pref_record.iter('def_startupfolder'):
-            tags.text = self.LineEdit_def_startupfolder.text()
-        for tags in pref_record.iter('def_creator'):
-            tags.text = self.def_creator.text()
-        for tags in pref_record.iter('def_copyright'):
-            tags.text = self.def_copyright.text()
-        for tags in pref_record.iter('images_view'):
-            tags.text = self.images_view.currentText()
-
-    try:
-        userpath = os.path.expanduser('~')
-        #print(userpath)
-        self.configtree.write(os.path.join(userpath, '.pyenfusegui', 'config.xml'))
-    except:
-        sg.popup("Error!", "Unable to open config.xml for writing" )
-
-
-# End of Configuration xml file
-##################################################################################################
 # This functions (re)creates our work folder which is a subfolder
 # of the platform define tmp folder
 def recreate_tmp_workfolder(tmp_folder):
@@ -184,7 +76,7 @@ def getFileName(folder):
               [sg.Input(folderInputTxt, key='-FOLDER-'), sg.FolderBrowse()],
               [sg.B('OK'), sg.B('Cancel')]]
 
-    window = sg.Window('Provide a filename', layout)
+    window = sg.Window('Provide a filename', layout, icon=image_functions.get_icon())
     while True:
         event, values = window.read()
         if event in(sg.WINDOW_CLOSED, 'Cancel'):
@@ -198,3 +90,14 @@ def getFileName(folder):
 
     window.close()
     return folder, fileName
+
+# This functions gets the file sizes of the preview images
+def getFileSizes(all_values, tmpfolder):
+    is_zero = 0
+
+    files = all_values['-FILE LIST-']
+    for file in files:
+        previewfile = os.path.join(tmpfolder, file)
+        if os.path.getsize(previewfile) == 0:
+            is_zero += 1
+    return is_zero
