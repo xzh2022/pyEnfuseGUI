@@ -12,11 +12,26 @@
 # warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See
 # the GNU General Public Licence for more details.
 
-import os, shutil, glob
+import glob, os, shutil, sys
 
 import PySimpleGUI as sg
 
 import image_functions
+
+# Aw we will package pyEnfuseGUI as a onefile executable for windows
+# we need this function to be able to correctly start enfuse and
+# align_image_stack
+# https://stackoverflow.com/questions/7674790/bundling-data-files-with-pyinstaller-onefile
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
 
 # This functions (re)creates our work folder which is a subfolder
 # of the platform define tmp folder

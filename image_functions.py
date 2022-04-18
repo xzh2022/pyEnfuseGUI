@@ -213,12 +213,12 @@ def create_ais_command(all_values, folder, tmpfolder, type):
 
     file_functions.remove_files(os.path.join(tmpfolder,'*ais*'))
     if platform.system() == 'Windows':
-        cmd_string = 'align_image_stack.exe '
+        cmd_string = os.path.join(file_functions.resource_path('enfuse_ais'),'align_image_stack.exe')
     else:
         cmd_string = 'align_image_stack '
     if (type == 'preview'):
         #cmd_string = 'align_image_stack --gpu -a ' + os.path.join(tmpfolder,'preview_ais_001') + ' -v -t 2 -C -i '
-        cmd_string += '--gpu -a ' + os.path.join(tmpfolder, 'preview_ais_001') + ' '
+        cmd_string += ' -a ' + os.path.join(tmpfolder, 'preview_ais_001') + ' '
         cmd_list.append('--gpu')
         cmd_list.append('-a')
         cmd_list.append(os.path.join(tmpfolder, 'preview_ais_001'))
@@ -281,7 +281,7 @@ def check_enfuse_output_format(all_values):
 def create_enfuse_command(all_values, folder, tmpfolder, type, newImageFileName):
     cmd_string = ""
     if platform.system() == 'Windows':
-        cmd_string = 'enfuse.exe '
+        cmd_string = os.path.join(file_functions.resource_path('enfuse_ais'),'enfuse.exe')
     else:
         cmd_string = 'enfuse '
     if type == 'preview_ais':
