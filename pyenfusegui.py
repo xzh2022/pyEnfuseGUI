@@ -69,10 +69,11 @@ def main():
     tmpfolder = os.path.join(os.path.realpath(tempfile.gettempdir()), 'pyenfusegui')
     settingsFile = os.path.join(os.path.realpath(Path.home()), '.pyenfusegui.json')
     file_functions.recreate_tmp_workfolder(tmpfolder)
-    sg.user_settings_filename(path=Path.home())
-    start_folder = sg.user_settings_get_entry('imgfolder', Path.home())
-    print("\n",settingsFile)
-    print(tempfile.gettempdir())
+    sg.user_settings_filename(path=os.path.realpath(Path.home()))
+    start_folder = sg.user_settings_get_entry('imgfolder', os.path.realpath(Path.home()))
+    print("\nsettingsfile: ",settingsFile)
+    print("tmpdir", os.path.realpath(tempfile.gettempdir()))
+    print("current path ", os.path.realpath('.'))
 
     # Display the GUI to the user
     window =  ui_layout.create_and_show_gui(tmpfolder,start_folder)

@@ -28,10 +28,13 @@ def resource_path(relative_path):
         # PyInstaller creates a temp folder and stores path in _MEIPASS
         base_path = sys._MEIPASS
     except Exception:
-        base_path = os.path.abspath(".")
+        base_path = os.path.realpath(".")
 
-    return os.path.join(base_path, relative_path)
+    return os.path.join(os.path.realpath(base_path), relative_path)
 
+#def enf_ais_path(relative_path):
+#    enf_ais = os.path.join(os.path.realpath("."), enfuse_ais)
+#    return enf_ais
 
 # This functions (re)creates our work folder which is a subfolder
 # of the platform define tmp folder
